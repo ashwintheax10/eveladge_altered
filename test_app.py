@@ -1,74 +1,17 @@
-# app.py  ──────────────────────────────────────────────────
 from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
-from proctoring.system import IntegratedProctoringSystem
 from code_execution.executor import CodeExecutor
 from code_execution.problems import ProblemsDatabase
-import threading
+import os
 
-# local modules
-from proctoring.vision import verify_user, analyse_frame
-
-# ─── Flask setup ─────────────────────────────────────────
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})       # dev‑only; remove in prod
-
-system = IntegratedProctoringSystem(disable_ui=True)
+CORS(app)  # Enable CORS for all routes
 code_executor = CodeExecutor()
 problems_db = ProblemsDatabase()
 
-# ─── Face verification & live proctoring endpoints ──────
-@app.post("/verify")
-def verify():
-    ok, payload = verify_user(request.form["image"])
-    return jsonify({"ok": ok, **payload})
-
-@app.post("/proctor")
-def proctor():
-    if not system.is_session_active:
-        return jsonify(status="INACTIVE")
-    return jsonify(analyse_frame(request.form["image"]))
-
-# ─── Existing UI (templates/index.html) ──────────────────
-@app.get("/")
+@app.route('/')
 def home():
-    return render_template("index.html", session_id=system.session_id)
-
-# ─── Start / stop the integrated CLI loop (unchanged) ───
-@app.post("/start_proctoring")
-def start_proctoring():
-    if getattr(system, "session_thread", None) and system.session_thread.is_alive():
-        return jsonify(status="Proctoring session already running"), 200
-
-    # lazy‑init hardware
-    if system.camera is None and not system.initialize_camera():
-        return jsonify(error="Failed to initialize camera"), 500
-    if system.audio_stream is None and not system.initialize_audio():
-        return jsonify(error="Failed to initialize audio"), 500
-
-    system.is_session_active = True
-    system.session_thread = threading.Thread(
-        target=system.run_proctoring_loop, daemon=True)
-    system.session_thread.start()
-
-    return jsonify(status="Proctoring session started"), 200
-
-@app.post("/end_proctoring")
-def end_proctoring():
-    system.emergency_stop()
-    return jsonify(status="Proctoring session ended"), 200
-
-@app.get("/status")
-def get_status():
-    return jsonify(
-        session_active   = system.is_session_active,
-        session_id       = system.session_id,
-        major_violations = system.major_violations,
-        minor_violations = system.minor_violations,
-        max_violations   = system.max_violations,
-        camera_init      = system.camera is not None,
-        audio_init       = system.audio_stream is not None
-    ), 200
+    return jsonify({"message": "EvalEdge Code Execution API", "status": "running"})
 
 # Code Execution Endpoints
 @app.route('/api/problems', methods=['GET'])
@@ -96,6 +39,12 @@ def execute_code():
     """Execute code and run test cases"""
     try:
         data = request.get_json()
+        
+        # Debug logging
+        print(f"🐛 Backend received:")
+        print(f"   Language: {data.get('language')}")
+        print(f"   Problem ID: {data.get('problem_id')}")
+        print(f"   Code preview: {data.get('code', '')[:100]}...")
         
         # Validate required fields
         required_fields = ['code', 'language', 'problem_id']
@@ -148,6 +97,11 @@ def run_sample():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# ─── run ─────────────────────────────────────────────────
-if __name__ == "__main__":
-    app.run(debug=True)
+if __name__ == '__main__':
+    print("Starting EvalEdge Code Execution Server...")
+    print("Available endpoints:")
+    print("- GET /api/problems - Get all problems")
+    print("- GET /api/problems/<id> - Get specific problem")
+    print("- POST /api/execute - Execute code with all test cases")
+    print("- POST /api/run-sample - Execute code with sample test case")
+    app.run(debug=True, port=5001)
