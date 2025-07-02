@@ -1,4 +1,16 @@
-# React + TypeScript + Vite
+# Eveladge - AI-Powered Online Proctoring Platform
+
+Eveladge is a modern, React-based online proctoring platform that combines AI-powered monitoring with a user-friendly interface. This project includes both frontend (React + TypeScript + Vite) and backend (Python Flask) components.
+
+## Features
+
+- **AI-Powered Proctoring**: Advanced eye tracking and behavioral analysis
+- **Real-time Monitoring**: Live exam supervision with intelligent alerts
+- **Modern UI**: Built with React, TypeScript, and Tailwind CSS
+- **Responsive Design**: Works seamlessly across different devices
+- **Secure Testing Environment**: Comprehensive security measures
+
+## Frontend (React + TypeScript + Vite)
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
@@ -6,6 +18,28 @@ Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
 - [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+
+## Backend (Python Flask)
+
+The backend includes proctoring functionality with:
+- Eye tracking monitoring
+- System monitoring
+- Real-time snapshot capture
+- Flask-based API endpoints
+
+## Getting Started
+
+### Frontend Setup
+```bash
+npm install
+npm run dev
+```
+
+### Backend Setup
+```bash
+pip install -r requirements.txt
+python app.py
+```
 
 ## Expanding the ESLint configuration
 
