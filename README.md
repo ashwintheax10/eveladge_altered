@@ -29,16 +29,48 @@ The backend includes proctoring functionality with:
 
 ## Getting Started
 
-### Frontend Setup
+### Quick Setup for Code Execution Testing
+
+1. **Install Python dependencies:**
 ```bash
-npm install
-npm run dev
+pip install flask psutil
 ```
 
-### Backend Setup
+2. **Start the code execution server:**
+```bash
+python test_app.py
+```
+This starts the server on http://localhost:5001
+
+3. **Install frontend dependencies:**
+```bash
+npm install
+```
+
+4. **Start the frontend:**
+```bash
+npm run dev
+```
+This starts the frontend on http://localhost:5173
+
+5. **Test the system:**
+   - Navigate to http://localhost:5173/exam
+   - Select a coding problem (Two Sum, Binary Search, etc.)
+   - Write your solution in JavaScript or Python
+   - Click "Run Sample" to test with sample input
+   - Click "Submit" to run all test cases
+
+### Backend Setup (with Proctoring - requires additional setup)
 ```bash
 pip install -r requirements.txt
 python app.py
+```
+
+### Testing Code Execution
+
+Run the test script to verify everything works:
+```bash
+python test_execution.py
 ```
 
 ## Expanding the ESLint configuration
