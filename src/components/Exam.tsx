@@ -48,6 +48,11 @@ const Exam: React.FC = () => {
   const [showResults, setShowResults] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [activeTab, setActiveTab] = useState<'description' | 'examples' | 'constraints'>('description');
+  const [warningCount, setWarningCount] = useState(0);
+  const [showWarning, setShowWarning] = useState(false);
+  const [sessionTerminated, setSessionTerminated] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(5400); // 90 minutes in seconds
+  const [initialWindowSize, setInitialWindowSize] = useState<{width: number, height: number} | null>(null);
 
   // Load problems on component mount
   useEffect(() => {
@@ -62,6 +67,73 @@ const Exam: React.FC = () => {
       setCode(starterCode);
     }
   }, [currentProblemIndex, language, problems]);
+
+  useEffect(() => {
+    setInitialWindowSize({ width: window.innerWidth, height: window.innerHeight });
+  }, []);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        setWarningCount((prev) => {
+          if (prev < 2) {
+            setShowWarning(true);
+            return prev + 1;
+          } else if (prev === 2) {
+            setSessionTerminated(true);
+            setShowWarning(false);
+            return prev + 1;
+          }
+          return prev;
+        });
+      }
+    };
+    const handleResize = () => {
+      if (initialWindowSize) {
+        if (
+          window.innerWidth < initialWindowSize.width * 0.7 ||
+          window.innerHeight < initialWindowSize.height * 0.7
+        ) {
+          setWarningCount((prev) => {
+            if (prev < 2) {
+              setShowWarning(true);
+              return prev + 1;
+            } else if (prev === 2) {
+              setSessionTerminated(true);
+              setShowWarning(false);
+              return prev + 1;
+            }
+            return prev;
+          });
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('resize', handleResize);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [initialWindowSize]);
+
+  useEffect(() => {
+    if (sessionTerminated) return;
+    if (timeLeft <= 0) {
+      setSessionTerminated(true);
+      return;
+    }
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [timeLeft, sessionTerminated]);
+
+  // Helper to format time as MM:SS
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
 
   const fetchProblems = async () => {
     try {
@@ -142,6 +214,18 @@ const Exam: React.FC = () => {
     setShowResults(false);
   };
 
+  if (sessionTerminated) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+        <div className="bg-white p-8 rounded shadow text-center">
+          <h2 className="text-2xl font-bold mb-4 text-red-600">Session Ended</h2>
+          <p className="mb-4">You have switched tabs too many times. Your exam session has been terminated.</p>
+          <button onClick={() => window.location.href = '/'} className="bg-blue-600 text-white px-4 py-2 rounded">Go to Home</button>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-100">
@@ -169,16 +253,21 @@ const Exam: React.FC = () => {
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">
+      {/* Warning Modal */}
+      {showWarning && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded shadow text-center">
+            <h2 className="text-xl font-bold mb-2 text-yellow-600">Warning {warningCount}/3</h2>
+            <p className="mb-4">Do not leave or switch tabs during the exam! On the 3rd warning, your session will be terminated.</p>
+            <button onClick={() => setShowWarning(false)} className="bg-yellow-500 text-white px-4 py-2 rounded">OK</button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
-      <div className="bg-white shadow-sm border-b px-6 py-4 flex justify-between items-center">
+      <div className="bg-white shadow-sm border-b px-6 py-4 flex justify-between items-center fixed top-0 left-0 w-full z-50">
         <div className="flex items-center space-x-4">
-          <button
-            onClick={() => navigate('/')}
-            className="text-gray-600 hover:text-gray-900 flex items-center"
-          >
-            ← Back to Home
-          </button>
-          <div className="text-lg font-semibold text-gray-900">
+          <div className="text-lg font-semibold bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 bg-clip-text text-transparent">
             EvalEdge Coding Assessment
           </div>
         </div>
@@ -192,7 +281,7 @@ const Exam: React.FC = () => {
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
           <div className="text-sm text-gray-600">
-            Time Remaining: <span className="font-semibold text-red-600">89:45</span>
+            Time Remaining: <span className="font-semibold text-red-600">{formatTime(timeLeft)}</span>
           </div>
           <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">
             Submit Test
@@ -201,7 +290,7 @@ const Exam: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex">
+      <div className="flex-1 flex pt-16">
         {/* Left Panel - Problem Description (40%) */}
         <div className="w-2/5 bg-white border-r border-gray-200 flex flex-col">
           {/* Problem Navigation */}
