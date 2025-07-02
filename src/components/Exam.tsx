@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 
@@ -53,6 +53,8 @@ const Exam: React.FC = () => {
   const [sessionTerminated, setSessionTerminated] = useState(false);
   const [timeLeft, setTimeLeft] = useState(5400); // 90 minutes in seconds
   const [initialWindowSize, setInitialWindowSize] = useState<{width: number, height: number} | null>(null);
+  const appContainerRef = useRef<HTMLDivElement>(null);
+  const [initialAppRect, setInitialAppRect] = useState<{width: number, height: number} | null>(null);
 
   // Load problems on component mount
   useEffect(() => {
@@ -70,6 +72,10 @@ const Exam: React.FC = () => {
 
   useEffect(() => {
     setInitialWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    if (appContainerRef.current) {
+      const rect = appContainerRef.current.getBoundingClientRect();
+      setInitialAppRect({ width: rect.width, height: rect.height });
+    }
   }, []);
 
   useEffect(() => {
@@ -91,8 +97,8 @@ const Exam: React.FC = () => {
     const handleResize = () => {
       if (initialWindowSize) {
         if (
-          window.innerWidth < initialWindowSize.width * 0.7 ||
-          window.innerHeight < initialWindowSize.height * 0.7
+          window.innerWidth < initialWindowSize.width * 0.9 ||
+          window.innerHeight < initialWindowSize.height * 0.9
         ) {
           setWarningCount((prev) => {
             if (prev < 2) {
@@ -115,6 +121,33 @@ const Exam: React.FC = () => {
       window.removeEventListener('resize', handleResize);
     };
   }, [initialWindowSize]);
+
+  // Periodically check visible area of app container
+  useEffect(() => {
+    if (!initialAppRect) return;
+    const interval = setInterval(() => {
+      if (appContainerRef.current) {
+        const rect = appContainerRef.current.getBoundingClientRect();
+        if (
+          rect.width < initialAppRect.width * 0.9 ||
+          rect.height < initialAppRect.height * 0.9
+        ) {
+          setWarningCount((prev) => {
+            if (prev < 2) {
+              setShowWarning(true);
+              return prev + 1;
+            } else if (prev === 2) {
+              setSessionTerminated(true);
+              setShowWarning(false);
+              return prev + 1;
+            }
+            return prev;
+          });
+        }
+      }
+    }, 1000); // check every second
+    return () => clearInterval(interval);
+  }, [initialAppRect]);
 
   useEffect(() => {
     if (sessionTerminated) return;
@@ -252,7 +285,7 @@ const Exam: React.FC = () => {
   const totalProblems = problems.length;
 
   return (
-    <div className="h-screen flex flex-col bg-gray-100">
+    <div ref={appContainerRef} className="h-screen flex flex-col bg-gray-100">
       {/* Warning Modal */}
       {showWarning && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
