@@ -129,27 +129,6 @@ const Exam: React.FC = () => {
   };
 
   const handleNext = () => {
-<<<<<<< HEAD
-    if (currentQuestion < totalQuestions) {
-      setCurrentQuestion(currentQuestion + 1);
-    }
-  };
-
-  const handleSaveDraft = () => {
-    console.log('Saving draft for question', currentQuestion);
-    alert('Draft saved successfully!');
-  };
-
-  const getCurrentQuestionData = () => {
-    return questions.find(q => q.id === currentQuestion) || {
-      id: currentQuestion,
-      title: `Question ${currentQuestion}`,
-      content: `This is question ${currentQuestion}. Please provide a detailed answer to this question.`
-    };
-  };
-
-  const currentQuestionData = getCurrentQuestionData();
-=======
     if (currentProblemIndex < problems.length - 1) {
       setCurrentProblemIndex(currentProblemIndex + 1);
       setExecutionResult(null);
@@ -187,7 +166,6 @@ const Exam: React.FC = () => {
 
   const currentProblem = problems[currentProblemIndex];
   const totalProblems = problems.length;
->>>>>>> ff420ab4b937058fe52bdd7d7413bee8b2962ec3
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">
@@ -196,23 +174,15 @@ const Exam: React.FC = () => {
         <div className="flex items-center space-x-4">
           <button
             onClick={() => navigate('/')}
-<<<<<<< HEAD
-            className="text-gray-600 hover:text-gray-900"
-          >
-            Back to Home
-=======
             className="text-gray-600 hover:text-gray-900 flex items-center"
           >
             ← Back to Home
->>>>>>> ff420ab4b937058fe52bdd7d7413bee8b2962ec3
           </button>
           <div className="text-lg font-semibold text-gray-900">
             EvalEdge Coding Assessment
           </div>
         </div>
         <div className="flex items-center space-x-4">
-<<<<<<< HEAD
-=======
           {/* Theme Toggle */}
           <button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -221,7 +191,6 @@ const Exam: React.FC = () => {
           >
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
->>>>>>> ff420ab4b937058fe52bdd7d7413bee8b2962ec3
           <div className="text-sm text-gray-600">
             Time Remaining: <span className="font-semibold text-red-600">89:45</span>
           </div>
@@ -233,26 +202,6 @@ const Exam: React.FC = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex">
-<<<<<<< HEAD
-        {/* Left Panel - Questions (40%) */}
-        <div className="w-2/5 bg-white border-r border-gray-200 flex flex-col">
-          {/* Question Navigation */}
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Question {currentQuestion} of {totalQuestions}
-              </h2>
-              <div className="text-sm text-gray-500">
-                {Math.round((currentQuestion / totalQuestions) * 100)}% Complete
-              </div>
-            </div>
-            
-            {/* Question Progress Bar */}
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${(currentQuestion / totalQuestions) * 100}%` }}
-=======
         {/* Left Panel - Problem Description (40%) */}
         <div className="w-2/5 bg-white border-r border-gray-200 flex flex-col">
           {/* Problem Navigation */}
@@ -275,20 +224,10 @@ const Exam: React.FC = () => {
               <div 
                 className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${((currentProblemIndex + 1) / totalProblems) * 100}%` }}
->>>>>>> ff420ab4b937058fe52bdd7d7413bee8b2962ec3
               ></div>
             </div>
           </div>
 
-<<<<<<< HEAD
-          {/* Question Content */}
-          <div className="flex-1 p-6 overflow-y-auto">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">
-              {currentQuestionData.title}
-            </h3>
-            <div className="text-gray-700 leading-relaxed">
-              {currentQuestionData.content}
-=======
           {/* Problem Content with Tabs */}
           <div className="flex-1 flex flex-col">
             <h3 className="text-xl font-semibold text-gray-900 mb-4 px-6 pt-6">
@@ -395,7 +334,6 @@ const Exam: React.FC = () => {
                   </div>
                 </div>
               )}
->>>>>>> ff420ab4b937058fe52bdd7d7413bee8b2962ec3
             </div>
           </div>
 
@@ -404,15 +342,9 @@ const Exam: React.FC = () => {
             <div className="flex justify-between items-center">
               <button
                 onClick={handlePrevious}
-<<<<<<< HEAD
-                disabled={currentQuestion === 1}
-                className={`px-4 py-2 rounded text-sm font-medium ${
-                  currentQuestion === 1
-=======
                 disabled={currentProblemIndex === 0}
                 className={`px-4 py-2 rounded text-sm font-medium ${
                   currentProblemIndex === 0
->>>>>>> ff420ab4b937058fe52bdd7d7413bee8b2962ec3
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-gray-600 hover:bg-gray-700 text-white'
                 }`}
@@ -421,24 +353,10 @@ const Exam: React.FC = () => {
               </button>
               
               <button
-<<<<<<< HEAD
-                onClick={handleSaveDraft}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium"
-              >
-                Save Draft
-              </button>
-              
-              <button
-                onClick={handleNext}
-                disabled={currentQuestion === totalQuestions}
-                className={`px-4 py-2 rounded text-sm font-medium ${
-                  currentQuestion === totalQuestions
-=======
                 onClick={handleNext}
                 disabled={currentProblemIndex === totalProblems - 1}
                 className={`px-4 py-2 rounded text-sm font-medium ${
                   currentProblemIndex === totalProblems - 1
->>>>>>> ff420ab4b937058fe52bdd7d7413bee8b2962ec3
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-green-600 hover:bg-green-700 text-white'
                 }`}
@@ -454,17 +372,6 @@ const Exam: React.FC = () => {
           {/* Editor Header */}
           <div className="bg-gray-800 text-white px-4 py-2 flex justify-between items-center">
             <div className="flex items-center space-x-4">
-<<<<<<< HEAD
-              <span className="text-sm">main.js</span>
-              <span className="text-xs text-gray-400">JavaScript</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <button className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs">
-                Run Code
-              </button>
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs">
-                Format Code
-=======
               <select
                 value={language}
                 onChange={(e) => handleLanguageChange(e.target.value)}
@@ -489,7 +396,6 @@ const Exam: React.FC = () => {
                 className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-3 py-1 rounded text-xs flex items-center"
               >
                 {executing ? '⏳' : '🚀'} Submit
->>>>>>> ff420ab4b937058fe52bdd7d7413bee8b2962ec3
               </button>
             </div>
           </div>
@@ -498,17 +404,10 @@ const Exam: React.FC = () => {
           <div className="flex-1">
             <Editor
               height="100%"
-<<<<<<< HEAD
-              defaultLanguage="javascript"
-              value={code}
-              onChange={(value) => setCode(value || '')}
-              theme="vs-dark"
-=======
               language={language}
               value={code}
               onChange={(value) => setCode(value || '')}
               theme={theme === 'dark' ? 'vs-dark' : 'light'}
->>>>>>> ff420ab4b937058fe52bdd7d7413bee8b2962ec3
               options={{
                 minimap: { enabled: false },
                 fontSize: 14,
@@ -520,8 +419,6 @@ const Exam: React.FC = () => {
                 tabSize: 2,
                 insertSpaces: true,
                 detectIndentation: false,
-<<<<<<< HEAD
-=======
                 folding: true,
                 bracketMatching: 'always',
                 autoIndent: 'full',
@@ -529,17 +426,10 @@ const Exam: React.FC = () => {
                 renderWhitespace: 'selection',
                 contextmenu: true,
                 mouseWheelZoom: true,
->>>>>>> ff420ab4b937058fe52bdd7d7413bee8b2962ec3
               }}
             />
           </div>
 
-<<<<<<< HEAD
-          {/* Output Panel */}
-          <div className="h-32 bg-gray-900 text-green-400 p-4 font-mono text-sm overflow-y-auto">
-            <div className="mb-2 text-gray-400">Output:</div>
-            <div>// Code output will appear here when you run your solution</div>
-=======
           {/* Results Panel */}
           <div className={`${showResults ? 'h-80' : 'h-40'} bg-gray-900 text-green-400 p-4 font-mono text-sm overflow-y-auto border-t border-gray-700 transition-all duration-300`}>
             <div className="flex justify-between items-center mb-2">
@@ -658,7 +548,6 @@ const Exam: React.FC = () => {
                 Show Detailed Results
               </button>
             )}
->>>>>>> ff420ab4b937058fe52bdd7d7413bee8b2962ec3
           </div>
         </div>
       </div>
