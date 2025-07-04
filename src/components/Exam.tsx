@@ -55,10 +55,13 @@ const Exam: React.FC = () => {
   const [initialWindowSize, setInitialWindowSize] = useState<{width: number, height: number} | null>(null);
   const appContainerRef = useRef<HTMLDivElement>(null);
   const [initialAppRect, setInitialAppRect] = useState<{width: number, height: number} | null>(null);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   // Load problems on component mount
   useEffect(() => {
     fetchProblems();
+    // Request full screen on component mount
+    requestFullScreen();
   }, []);
 
   // Update code when problem or language changes
@@ -94,6 +97,7 @@ const Exam: React.FC = () => {
         });
       }
     };
+    
     const handleResize = () => {
       if (initialWindowSize) {
         if (
@@ -114,13 +118,94 @@ const Exam: React.FC = () => {
         }
       }
     };
+
+    const handleFullScreenChange = () => {
+      const isCurrentlyFullScreen = !!(document.fullscreenElement || (document as any).webkitFullscreenElement || (document as any).msFullscreenElement);
+      setIsFullScreen(isCurrentlyFullScreen);
+      
+      // If user exits full screen, give warning
+      if (!isCurrentlyFullScreen && isFullScreen) {
+        setWarningCount((prev) => {
+          if (prev < 2) {
+            setShowWarning(true);
+            return prev + 1;
+          } else if (prev === 2) {
+            setSessionTerminated(true);
+            setShowWarning(false);
+            return prev + 1;
+          }
+          return prev;
+        });
+      }
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('resize', handleResize);
+    document.addEventListener('fullscreenchange', handleFullScreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullScreenChange);
+    document.addEventListener('msfullscreenchange', handleFullScreenChange);
+    
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('resize', handleResize);
+      document.removeEventListener('fullscreenchange', handleFullScreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullScreenChange);
+      document.removeEventListener('msfullscreenchange', handleFullScreenChange);
     };
-  }, [initialWindowSize]);
+  }, [initialWindowSize, isFullScreen]);
+
+  // Prevent keyboard shortcuts that could exit full screen or switch tabs
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent Alt+Tab, Ctrl+Tab, F11, Escape, etc.
+      const forbiddenKeys = [
+        'F11',
+        'Escape',
+        'Tab'
+      ];
+      
+      const forbiddenCombos = [
+        { key: 'Tab', ctrl: true },
+        { key: 'Tab', alt: true },
+        { key: 'Tab', meta: true },
+        { key: 'F4', alt: true },
+        { key: 'F4', ctrl: true },
+        { key: 'F4', meta: true },
+        { key: 'F11', ctrl: true },
+        { key: 'F11', alt: true },
+        { key: 'F11', meta: true },
+        { key: 'Escape', ctrl: true },
+        { key: 'Escape', alt: true },
+        { key: 'Escape', meta: true }
+      ];
+
+      // Check for forbidden keys
+      if (forbiddenKeys.includes(e.key)) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+
+      // Check for forbidden combinations
+      const isForbiddenCombo = forbiddenCombos.some(combo => 
+        e.key === combo.key && 
+        !!e.ctrlKey === !!combo.ctrl && 
+        !!e.altKey === !!combo.alt && 
+        !!e.metaKey === !!combo.meta
+      );
+
+      if (isForbiddenCombo) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown, true);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown, true);
+    };
+  }, []);
 
   // Periodically check visible area of app container
   useEffect(() => {
@@ -166,6 +251,41 @@ const Exam: React.FC = () => {
     const m = Math.floor(seconds / 60).toString().padStart(2, '0');
     const s = (seconds % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
+  };
+
+  // Full screen functions
+  const requestFullScreen = async () => {
+    try {
+      if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+        setIsFullScreen(true);
+      } else if ((document.documentElement as any).webkitRequestFullscreen) {
+        await (document.documentElement as any).webkitRequestFullscreen();
+        setIsFullScreen(true);
+      } else if ((document.documentElement as any).msRequestFullscreen) {
+        await (document.documentElement as any).msRequestFullscreen();
+        setIsFullScreen(true);
+      }
+    } catch (error) {
+      console.log('Full screen request failed:', error);
+    }
+  };
+
+  const exitFullScreen = async () => {
+    try {
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+        setIsFullScreen(false);
+      } else if ((document as any).webkitExitFullscreen) {
+        await (document as any).webkitExitFullscreen();
+        setIsFullScreen(false);
+      } else if ((document as any).msExitFullscreen) {
+        await (document as any).msExitFullscreen();
+        setIsFullScreen(false);
+      }
+    } catch (error) {
+      console.log('Exit full screen failed:', error);
+    }
   };
 
   const fetchProblems = async () => {
@@ -252,7 +372,7 @@ const Exam: React.FC = () => {
       <div className="flex items-center justify-center h-screen bg-gray-100">
         <div className="bg-white p-8 rounded shadow text-center">
           <h2 className="text-2xl font-bold mb-4 text-red-600">Session Ended</h2>
-          <p className="mb-4">You have switched tabs too many times. Your exam session has been terminated.</p>
+          <p className="mb-4">You have switched tabs or exited full screen too many times. Your exam session has been terminated.</p>
           <button onClick={() => window.location.href = '/'} className="bg-blue-600 text-white px-4 py-2 rounded">Go to Home</button>
         </div>
       </div>
@@ -286,13 +406,55 @@ const Exam: React.FC = () => {
 
   return (
     <div ref={appContainerRef} className="h-screen flex flex-col bg-gray-100">
+      {/* Full Screen Overlay */}
+      {!isFullScreen && !sessionTerminated && (
+        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-40">
+          <div className="bg-white p-8 rounded-lg shadow-xl text-center max-w-md">
+            <div className="text-6xl mb-4">🖥️</div>
+            <h2 className="text-2xl font-bold mb-4 text-gray-800">Full Screen Required</h2>
+            <p className="text-gray-600 mb-6">
+              This exam must be taken in full screen mode to ensure academic integrity and prevent tab switching.
+            </p>
+            <div className="space-y-3">
+              <button 
+                onClick={requestFullScreen}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+              >
+                Enter Full Screen Mode
+              </button>
+              <button 
+                onClick={() => window.location.href = '/'}
+                className="w-full bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-3 rounded-lg font-semibold transition-colors"
+              >
+                Exit Exam
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-4">
+              Press F11 or click the button above to enter full screen mode
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Warning Modal */}
       {showWarning && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded shadow text-center">
             <h2 className="text-xl font-bold mb-2 text-yellow-600">Warning {warningCount}/3</h2>
-            <p className="mb-4">Do not leave or switch tabs during the exam! On the 3rd warning, your session will be terminated.</p>
-            <button onClick={() => setShowWarning(false)} className="bg-yellow-500 text-white px-4 py-2 rounded">OK</button>
+            <p className="mb-4">
+              {warningCount === 1 ? 
+                "Do not leave or switch tabs during the exam! You must stay in full screen mode." :
+                "Do not leave or switch tabs during the exam! On the 3rd warning, your session will be terminated."
+              }
+            </p>
+            <div className="flex space-x-3">
+              <button onClick={() => setShowWarning(false)} className="bg-yellow-500 text-white px-4 py-2 rounded">OK</button>
+              {!isFullScreen && (
+                <button onClick={requestFullScreen} className="bg-blue-500 text-white px-4 py-2 rounded">
+                  Enter Full Screen
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -303,6 +465,11 @@ const Exam: React.FC = () => {
           <div className="text-lg font-semibold bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 bg-clip-text text-transparent">
             EvalEdge Coding Assessment
           </div>
+          {!isFullScreen && (
+            <div className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
+              ⚠️ Full Screen Required
+            </div>
+          )}
         </div>
         <div className="flex items-center space-x-4">
           {/* Theme Toggle */}
@@ -542,7 +709,6 @@ const Exam: React.FC = () => {
                 insertSpaces: true,
                 detectIndentation: false,
                 folding: true,
-                bracketMatching: 'always',
                 autoIndent: 'full',
                 cursorStyle: 'line',
                 renderWhitespace: 'selection',
