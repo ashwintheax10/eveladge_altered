@@ -97,5 +97,39 @@ def run_verification():
     cap.release()
     cv2.destroyAllWindows()
 
+def verify_image(b64_img):
+    """
+    Performs face verification on a base64 encoded image.
+    """
+    try:
+        # Decode the base64 image
+        img_data = base64.b64decode(b64_img.split(',')[1])
+        nparr = np.frombuffer(img_data, np.uint8)
+        bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        if bgr is None:
+            return {"ok": False, "error": "Could not decode image."}
+
+        # Get embedding
+        emb = get_emb(bgr)
+        if emb is None:
+            return {"ok": False, "error": "No face detected in the image."}
+
+        # Perform verification
+        best, name = 0.0, "Unknown"
+        for n, ref in reference.items():
+            score = float(np.dot(ref, emb))
+            if score > best:
+                best, name = score, n
+
+        if best >= EMB_THRESH:
+            return {"ok": True, "name": name, "score": f"{best:.2f}"}
+        else:
+            return {"ok": False, "error": "Verification failed: No match found.", "name": name, "score": f"{best:.2f}"}
+
+    except Exception as e:
+        return {"ok": False, "error": f"An error occurred: {str(e)}"}
+
+
 if __name__ == "__main__":
     run_verification()

@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+<head>
+  <title>Face Verification</title>
+  <style>
+    body{background:#111;color:#eee;text-align:center;font-family:sans-serif}
+    #msg{margin-top:1rem;font-size:1.1rem}
+    button{padding:.6rem 1.2rem;font-size:1.1rem}
+    video,canvas{border:3px solid #444;border-radius:4px}
+  </style>
+</head>
+<body>
+  <h2>Identity Verification</h2>
+  <video id="cam" width="480" autoplay playsinline></video><br><br>
+  <button onclick="verify()">Verify</button>
+  <p id="msg">Not checked</p>
+
+<script>
+const video=document.getElementById("cam");
+navigator.mediaDevices.getUserMedia({video:true}).then(s=>video.srcObject=s);
+
+function verify(){
+  const c=document.createElement("canvas");
+  c.width=video.videoWidth; c.height=video.videoHeight;
+  c.getContext("2d").drawImage(video,0,0);
+  const dataURL=c.toDataURL("image/jpeg",0.8);
+
+  fetch("/verify_api",{
+    method:"POST",
+    headers:{"Content-Type":"application/x-www-form-urlencoded"},
+    body:"image="+encodeURIComponent(dataURL)
+  })
+  .then(r=>r.json())
+  .then(j=>{
+    if(j.ok){
+      document.getElementById("msg").innerText=
+        `✅ Verified as ${j.person} (score ${j.score.toFixed(3)})`;
+    }else{
+      document.getElementById("msg").innerText=
+        `❌ ${j.msg} (closest ${j.closest||""} score ${(j.score||0).toFixed(3)})`;
+    }
+  })
+  .catch(e=>alert(e));
+}
+</script>
+</body>
+</html>
