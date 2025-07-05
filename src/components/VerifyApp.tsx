@@ -1,17 +1,16 @@
 // src/components/VerifyApp.tsx
 import React, { useEffect, useRef, useState } from 'react';
 
-
 interface Props {
-  onClose: () => void;   // parent passes a callback to hide the modal
+  onClose: () => void;          // parent callback to hide the modal
 }
 
 export default function VerifyApp({ onClose }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [message, setMessage]   = useState('Not checked');
+  const [message,   setMessage]   = useState('Not checked');
   const [verifying, setVerifying] = useState(false);
 
-  /* ───── Start webcam when component mounts ───── */
+  /* ─── Start webcam when the component mounts ─── */
   useEffect(() => {
     let stream: MediaStream;
 
@@ -28,17 +27,15 @@ export default function VerifyApp({ onClose }: Props) {
     startWebcam();
 
     // Stop the camera when component unmounts
-    return () => {
-      stream?.getTracks().forEach(t => t.stop());
-    };
+    return () => stream?.getTracks().forEach(t => t.stop());
   }, []);
 
-  /* ───── Send current frame to Flask /verify_api ───── */
+  /* ─── Snapshot → POST /verify_api ─── */
   const verify = async () => {
     if (!videoRef.current) return;
     setVerifying(true);
 
-    // Capture frame to canvas
+    // capture current frame
     const canvas = document.createElement('canvas');
     canvas.width  = videoRef.current.videoWidth;
     canvas.height = videoRef.current.videoHeight;
@@ -56,9 +53,11 @@ export default function VerifyApp({ onClose }: Props) {
 
       if (result.ok) {
         setMessage(`✅ Verified as ${result.person} (score ${result.score.toFixed(3)})`);
-        setTimeout(onClose, 1000);     // auto‑close after 1 s
+        setTimeout(onClose, 1000);   // auto‑close after 1 second
       } else {
-        setMessage(`❌ ${result.msg} (closest ${result.closest ?? 'N/A'}, score ${result.score?.toFixed(3)})`);
+        setMessage(
+          `❌ ${result.msg} (closest ${result.closest ?? 'N/A'}, score ${result.score?.toFixed(3)})`
+        );
       }
     } catch (err) {
       console.error(err);
@@ -69,7 +68,15 @@ export default function VerifyApp({ onClose }: Props) {
   };
 
   return (
-    <div style={{ background:'#111', color:'#eee', textAlign:'center', padding:'2rem', borderRadius:'8px' }}>
+    <div
+      style={{
+        background: '#111',
+        color: '#eee',
+        textAlign: 'center',
+        padding: '2rem',
+        borderRadius: '8px',
+      }}
+    >
       <h2>Identity Verification</h2>
 
       <video
@@ -77,30 +84,31 @@ export default function VerifyApp({ onClose }: Props) {
         width="480"
         autoPlay
         playsInline
-        style={{ border:'3px solid #444', borderRadius:'4px' }}
+        style={{ border: '3px solid #444', borderRadius: '4px' }}
       />
 
-      <br /><br />
+      <br />
+      <br />
 
       <button
         onClick={verify}
         disabled={verifying}
-        style={{ padding:'.6rem 1.2rem', fontSize:'1.1rem' }}
+        style={{ padding: '.6rem 1.2rem', fontSize: '1.1rem' }}
       >
         {verifying ? 'Verifying…' : 'Verify'}
       </button>
 
-      <p style={{ marginTop:'1rem', fontSize:'1.1rem' }}>{message}</p>
+      <p style={{ marginTop: '1rem', fontSize: '1.1rem' }}>{message}</p>
 
       <button
         onClick={onClose}
         style={{
-          marginTop:'0.5rem',
-          background:'none',
-          color:'#ccc',
-          textDecoration:'underline',
-          border:'none',
-          cursor:'pointer',
+          marginTop: '0.5rem',
+          background: 'none',
+          color: '#ccc',
+          textDecoration: 'underline',
+          border: 'none',
+          cursor: 'pointer',
         }}
       >
         Close

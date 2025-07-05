@@ -1,8 +1,9 @@
 // src/components/Instructions.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import VerifyApp from './VerifyApp';          // 👈 import the webcam widget
+import VerifyApp from './VerifyApp';
 
+/* ───────── static data ───────── */
 const guidelines = [
   'Do not switch tabs or lose focus during the test',
   'Keep your face visible to the camera at all times',
@@ -11,9 +12,16 @@ const guidelines = [
   'Three warnings will result in disqualification',
 ];
 
+/* ───────── component ───────── */
 const Instructions: React.FC = () => {
-  const navigate = useNavigate();
-  const [showVerification, setShowVerification] = useState(false);
+  const nav = useNavigate();
+  const [showVerify, setShowVerify] = useState(false);   // modal hidden at first
+
+  /* called by <VerifyApp> after a successful check */
+  const handleVerified = () => {
+    setShowVerify(false);                       // close modal
+    nav('/exam', { state: { verified: true } }); // pass “verified” flag
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#e8f0fe] to-[#dbeafe]">
@@ -23,7 +31,7 @@ const Instructions: React.FC = () => {
         </h1>
 
         <p className="text-lg text-gray-700 text-center mb-8 max-w-xl">
-          This test will be monitored using webcam-based proctoring. Please ensure you have a working webcam and are in a well‑lit environment.
+          This test will be monitored using webcam‑based proctoring. Please ensure you have a working webcam and are in a well‑lit environment.
         </p>
 
         <div className="bg-white rounded-xl shadow-lg p-8 w-full mb-10">
@@ -39,22 +47,17 @@ const Instructions: React.FC = () => {
         </div>
 
         <button
-          onClick={() => setShowVerification(true)}
+          onClick={() => setShowVerify(true)}
           className="bg-blue-600 hover:bg-blue-700 text-white text-lg font-semibold px-10 py-3 rounded-lg shadow transition-colors duration-200 mb-8"
         >
           Start Test
         </button>
       </div>
 
-      {/* Webcam verification modal */}
-      {showVerification && (
+      {/* ------------ webcam verification modal ------------ */}
+      {showVerify && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <VerifyApp
-            onClose={() => {
-              setShowVerification(false);   // hide modal
-              navigate('/exam');            // go to exam page
-            }}
-          />
+          <VerifyApp onClose={handleVerified} />
         </div>
       )}
     </div>
