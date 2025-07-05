@@ -2,40 +2,48 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 interface Props {
-  onClose: () => void;          // parent callback to hide the modal
+  onClose: () => void;          // parent callback – called only after success
 }
 
 export default function VerifyApp({ onClose }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [message,   setMessage]   = useState('Not checked');
+  const streamRef = useRef<MediaStream | null>(null);
+  const [message,   setMessage]   = useState('📷 Initialising camera…');
   const [verifying, setVerifying] = useState(false);
 
-  /* ─── Start webcam when the component mounts ─── */
+  /* ─── start webcam on mount ─── */
   useEffect(() => {
     let stream: MediaStream;
 
-    const startWebcam = async () => {
+    (async () => {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        if (videoRef.current) videoRef.current.srcObject = stream;
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play();
+        }
+        setMessage('Camera ready – click Verify');
       } catch (err) {
         console.error('Webcam error:', err);
-        setMessage('Could not access webcam.');
+        setMessage('❌ Cannot access webcam');
       }
-    };
+    })();
 
-    startWebcam();
-
-    // Stop the camera when component unmounts
-    return () => stream?.getTracks().forEach(t => t.stop());
+    return () => streamRef.current?.getTracks().forEach(t => t.stop());
   }, []);
 
-  /* ─── Snapshot → POST /verify_api ─── */
+  // Helper to stop webcam
+  const stopWebcam = () => {
+    streamRef.current?.getTracks().forEach(t => t.stop());
+    streamRef.current = null;
+  };
+
+  /* ─── send snapshot to backend ─── */
   const verify = async () => {
     if (!videoRef.current) return;
     setVerifying(true);
 
-    // capture current frame
     const canvas = document.createElement('canvas');
     canvas.width  = videoRef.current.videoWidth;
     canvas.height = videoRef.current.videoHeight;
@@ -52,19 +60,25 @@ export default function VerifyApp({ onClose }: Props) {
       const result = await res.json();
 
       if (result.ok) {
-        setMessage(`✅ Verified as ${result.person} (score ${result.score.toFixed(3)})`);
-        setTimeout(onClose, 1000);   // auto‑close after 1 second
+        setMessage(`✅ Verified as ${result.person} (score ${result.score.toFixed(3)})`);
+        setTimeout(() => {
+          stopWebcam();
+          onClose();
+        }, 300);           // auto‑close after 0.3 s
       } else {
-        setMessage(
-          `❌ ${result.msg} (closest ${result.closest ?? 'N/A'}, score ${result.score?.toFixed(3)})`
-        );
+        setMessage(`❌ ${result.msg} – try again`);
       }
     } catch (err) {
       console.error(err);
-      setMessage('Server error during verification');
+      setMessage('❌ Server error during verification');
     } finally {
       setVerifying(false);
     }
+  };
+
+  const handleStartExam = async () => {
+    await fetch(`${MONITOR_BASE}/reset`, { method: "POST" });
+    nav("/exam", { state: { verified: true } });
   };
 
   return (
@@ -87,8 +101,7 @@ export default function VerifyApp({ onClose }: Props) {
         style={{ border: '3px solid #444', borderRadius: '4px' }}
       />
 
-      <br />
-      <br />
+      <br /><br />
 
       <button
         onClick={verify}
@@ -99,20 +112,6 @@ export default function VerifyApp({ onClose }: Props) {
       </button>
 
       <p style={{ marginTop: '1rem', fontSize: '1.1rem' }}>{message}</p>
-
-      <button
-        onClick={onClose}
-        style={{
-          marginTop: '0.5rem',
-          background: 'none',
-          color: '#ccc',
-          textDecoration: 'underline',
-          border: 'none',
-          cursor: 'pointer',
-        }}
-      >
-        Close
-      </button>
     </div>
   );
 }

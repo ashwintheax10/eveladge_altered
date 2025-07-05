@@ -20,7 +20,7 @@ const Instructions: React.FC = () => {
   /* called by <VerifyApp> after a successful check */
   const handleVerified = () => {
     setShowVerify(false);                       // close modal
-    nav('/exam', { state: { verified: true } }); // pass “verified” flag
+    nav('/monitoring-start', { state: { verified: true } }); // go to monitoring start page
   };
 
   return (

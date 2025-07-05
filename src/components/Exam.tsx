@@ -37,66 +37,13 @@ interface ExecutionResult {
 
 /* ─────────── constants ───────── */
 const API_BASE       = "http://localhost:5001";   // your code‑exec backend
-const MONITOR_BASE   = "http://localhost:6000";   // monitor_app backend
-const EXAM_SECONDS   = 90 * 60;                   // 90 min
+const MONITOR_BASE   = "http://localhost:7000";   // monitor_app backend
+const EXAM_SECONDS   = 90 * 60;                   // 90 min
 
 /* ─────────── component ───────── */
 const Exam: React.FC = () => {
   const nav = useNavigate();
   const loc = useLocation() as { state?: { verified?: boolean } };
-const Exam: React.FC = () => {
-  /* existing state … */
-  const [showCam, setShowCam] = useState(true); // toggle helper
-
-  /* … the rest of your component … */
-
-  return (
-    <div className="h-screen flex flex-col bg-gray-100">
-      {/* header */}
-      <header /* unchanged */>
-        <div className="flex items-center space-x-3">
-          {/* ⏰ timer etc. */}
-          <button
-            onClick={() => setShowCam(s => !s)}
-            className="bg-gray-200 text-xs px-2 py-1 rounded"
-          >
-            {showCam ? "Hide Cam" : "Show Cam"}
-          </button>
-        </div>
-      </header>
-
-      {/* splitter */}
-      <div className="flex flex-1 pt-14">
-        {/* LEFT panel (problem description) */ }
-        <aside /* unchanged */ />
-
-        {/* RIGHT panel (editor) */}
-        <section className="flex-1 flex flex-col relative">
-          {/* existing toolbar + editor + console … */}
-
-          {/* ⬇ preview lives in a corner ⬇ */}
-          {showCam && (
-            <div
-              style={{
-                position: "absolute",
-                right: 8,
-                bottom: 8,
-                zIndex: 60,
-                background: "#00000080",
-                padding: 4,
-                borderRadius: 6,
-              }}
-            >
-              <CamPreview w={180} h={135} />
-            </div>
-          )}
-        </section>
-      </div>
-
-      {/* warn / verify modals … */}
-    </div>
-  );
-};
 
   /* send people back if they bypass verification */
   useEffect(() => {
@@ -120,6 +67,7 @@ const Exam: React.FC = () => {
   const [warnings, setWarnings] = useState(0);
   const [warnModal, setWarnModal] = useState(false);
   const [terminated, setTerminated] = useState(false);
+  const [showCam, setShowCam] = useState(true); // toggle helper
 
   /* verify modal (if you want manual re‑verify) */
   const [showVerify, setShowVerify] = useState(false);
@@ -173,7 +121,7 @@ const Exam: React.FC = () => {
       } catch (e) {
         console.error("status poll:", e);
       }
-    }, 3000);               // every 3 s
+    }, 3000);               // every 3 s
     return () => clearInterval(id);
   }, []);
 
@@ -252,7 +200,15 @@ const Exam: React.FC = () => {
       {/* header */}
       <header className="bg-white border-b shadow px-6 py-3 flex justify-between items-center fixed w-full z-40">
         <span className="font-semibold">EvalEdge Coding Assessment</span>
-        <span className="text-sm">⏰ {fmt(timeLeft)}</span>
+        <div className="flex items-center space-x-3">
+          <span className="text-sm">⏰ {fmt(timeLeft)}</span>
+          <button
+            onClick={() => setShowCam(s => !s)}
+            className="bg-gray-200 text-xs px-2 py-1 rounded"
+          >
+            {showCam ? "Hide Cam" : "Show Cam"}
+          </button>
+        </div>
       </header>
 
       {/* main splitter */}
@@ -297,7 +253,7 @@ const Exam: React.FC = () => {
         </aside>
 
         {/* right panel */}
-        <section className="flex-1 flex flex-col">
+        <section className="flex-1 flex flex-col relative">
           {/* toolbar */}
           <div className="bg-gray-800 text-white px-4 py-2 flex justify-between">
             <select
@@ -314,14 +270,14 @@ const Exam: React.FC = () => {
                 disabled={execing}
                 className="bg-blue-600 px-2 py-1 text-xs rounded"
               >
-                ▷ Run Sample
+                ▷ Run Sample
               </button>
               <button
                 onClick={() => runCode(true)}
                 disabled={execing}
                 className="bg-green-600 px-2 py-1 text-xs rounded"
               >
-                🚀 Submit
+                🚀 Submit
               </button>
             </div>
           </div>
@@ -340,6 +296,23 @@ const Exam: React.FC = () => {
           <div className="flex-1 bg-black text-green-400 p-3 text-sm overflow-y-auto">
             <pre>{output || "// run code to see output"}</pre>
           </div>
+
+          {/* ⬇ preview lives in a corner ⬇ */}
+          {showCam && !terminated && (
+            <div
+              style={{
+                position: "absolute",
+                right: 8,
+                bottom: 8,
+                zIndex: 60,
+                background: "#00000080",
+                padding: 4,
+                borderRadius: 6,
+              }}
+            >
+              <CamPreview url={`${MONITOR_BASE}/video_feed`} w={180} h={135} />
+            </div>
+          )}
         </section>
       </div>
 
@@ -369,6 +342,13 @@ const Exam: React.FC = () => {
           <VerifyApp onClose={() => setShowVerify(false)} />
         </div>
       )}
+
+      <button
+        onClick={() => nav('/monitoring-start')}
+        className="bg-green-600 hover:bg-green-700 text-white text-lg font-semibold px-10 py-3 rounded-lg shadow transition-colors duration-200 mb-4"
+      >
+        Proceed to Monitoring
+      </button>
     </div>
   );
 };

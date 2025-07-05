@@ -11,6 +11,7 @@ import FinalCTA from './components/FinalCTA';
 import Footer from './components/Footer';
 import Instructions from './components/Instructions';
 import Exam from './components/Exam';
+import MonitoringStart from './components/MonitoringStart';
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
           </>
         } />
         <Route path="/instructions" element={<Instructions />} />
+        <Route path="/monitoring-start" element={<MonitoringStart />} />
         <Route path="/exam" element={<Exam />} />
       </Routes>
     </Router>
