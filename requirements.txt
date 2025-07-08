@@ -1,8 +1,12 @@
 flask
+flask-cors
+werkzeug
 opencv-python
 mediapipe
 sounddevice
 numpy
-subprocess32
 psutil
 timeout-decorator
+insightface
+onnxruntime
+pillow
