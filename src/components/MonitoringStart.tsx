@@ -7,7 +7,7 @@ const MonitoringStart: React.FC = () => {
   const nav = useNavigate();
   const [monitorReady, setMonitorReady] = useState(false);
   const [checking, setChecking] = useState(true);
-  const [timer, setTimer] = useState(30);
+  const [timer, setTimer] = useState(0);
 
   useEffect(() => {
     // Check if monitoring-app is running
