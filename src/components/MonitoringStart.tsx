@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-const MONITOR_BASE = "http://localhost:7000";
+const MONITOR_BASE = "/monitor";
 
 const MonitoringStart: React.FC = () => {
   const nav = useNavigate();
   const [monitorReady, setMonitorReady] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [timer, setTimer] = useState(30);
 
   useEffect(() => {
     // Check if monitoring-app is running
@@ -15,6 +16,13 @@ const MonitoringStart: React.FC = () => {
       .catch(() => setMonitorReady(false))
       .finally(() => setChecking(false));
   }, []);
+
+  useEffect(() => {
+    if (!monitorReady) return;
+    if (timer === 0) return;
+    const id = setInterval(() => setTimer(t => t - 1), 1000);
+    return () => clearInterval(id);
+  }, [monitorReady, timer]);
 
   const handleStartExam = async () => {
     await fetch(`${MONITOR_BASE}/reset`, { method: "POST" });
@@ -47,9 +55,9 @@ const MonitoringStart: React.FC = () => {
         <button
           className="bg-blue-600 text-white px-6 py-2 rounded font-semibold hover:bg-blue-700 transition"
           onClick={handleStartExam}
-          disabled={!monitorReady}
+          disabled={!monitorReady || timer > 0}
         >
-          Start Exam
+          {timer > 0 ? `Start Exam (${timer})` : "Start Exam"}
         </button>
       </div>
     </div>

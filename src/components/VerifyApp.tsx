@@ -52,7 +52,7 @@ export default function VerifyApp({ onClose }: Props) {
     const dataURL = canvas.toDataURL('image/jpeg', 0.8);
 
     try {
-      const res = await fetch('/verify_api', {
+      const res = await fetch('/verify/verify_api', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'image=' + encodeURIComponent(dataURL),

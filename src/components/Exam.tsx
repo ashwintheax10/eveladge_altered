@@ -36,8 +36,8 @@ interface ExecutionResult {
 }
 
 /* ─────────── constants ───────── */
-const API_BASE       = "http://localhost:5001";   // your code‑exec backend
-const MONITOR_BASE   = "http://localhost:7000";   // monitor_app backend
+const API_BASE       = "/code";   // unified code‑exec backend
+const MONITOR_BASE   = "/monitor";   // unified monitor_app backend
 const EXAM_SECONDS   = 90 * 60;                   // 90 min
 
 /* ─────────── component ───────── */

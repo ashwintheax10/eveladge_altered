@@ -8,13 +8,11 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
-  proxy: {
-    '/verify_api': {
-      target: 'http://localhost:5000',
-      changeOrigin: true,
-         secure: false,
-      },
-    },
+    proxy: {
+      '/monitor': 'http://localhost:5000',
+      '/verify': 'http://localhost:5000',
+      '/code': 'http://localhost:5000',
+    }
   },
 });
 
